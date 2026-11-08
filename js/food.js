@@ -3,35 +3,11 @@ import { state, save } from './store.js';
 import { $, num, fmt } from './utils.js';
 import { unit, inputVal, fromD, show, isImp, G_PER_OZ } from './units.js';
 import { gearTotals } from './gear.js';
+import { calcFood, calcWater } from './core/calc.js';
+import { tip } from './ui/tips.js';
 
-/* ---------- Models (all metric) ----------
-   Daily energy = baseline (resting + camp life) + walking + climbing, × cold factor.
-   - Baseline ≈ 26 kcal per kg body mass per day (≈ BMR × 1.2).
-   - Walking on trail ≈ 0.63 kcal per kg (body + pack) per km (net walking cost ×1.15 for uneven terrain).
-   - Climbing ≈ 0.0094 kcal per kg per metre gained (mgh at ~25% muscular efficiency).
-   - Cold (below freezing) adds ~15% (thermoregulation, heavier gear, snow travel). */
-export function calcFood(f) {
-  const load = f.bodyKg + f.packKg;
-  const baseline = 26 * f.bodyKg;
-  const walking = 0.63 * load * f.distKm;
-  const climbing = 0.0094 * load * f.gainM;
-  const perDay = (baseline + walking + climbing) * (f.cold ? 1.15 : 1);
-  const kcalPer100g = f.density / G_PER_OZ * 100; // density stored as kcal/oz
-  const foodG = perDay / kcalPer100g * 100;
-  return { baseline, walking, climbing, perDay, total: perDay * f.days, foodG, foodTotalG: foodG * f.days };
-}
-
-/* Water: litres per hour scale with temperature; time from pace + Naismith-style
-   climbing allowance (≈1 extra hour per 600 m gained). Reserve 0.5 L; dry camp +3 L. */
-export function calcWater(w) {
-  const t = w.tempC;
-  const rate = t <= 10 ? 0.4 : t <= 21 ? 0.5 : t <= 27 ? 0.65 : t <= 32 ? 0.85 : 1.0;
-  const hours = (w.paceKmh > 0 ? w.distKm / w.paceKmh : 0) + w.gainM / 600;
-  const drink = hours * rate;
-  const reserve = 0.5;
-  const camp = w.dryCamp ? 3 : 0;
-  return { rate, hours, drink, reserve, camp, total: drink + reserve + camp };
-}
+// Models are in core/calc.js (documented + unit-tested there).
+export { calcFood, calcWater };
 
 let root;
 
@@ -55,7 +31,7 @@ export function render(el) {
         <label class="field"><span>Gain / day (${unit('elev')})</span><input class="input" type="number" min="0" step="any" name="gainM" value="${inputVal('elev', f.gainM)}"></label>
         <label class="field"><span>Body weight (${unit('body')})</span><input class="input" type="number" min="20" step="any" name="bodyKg" value="${inputVal('body', f.bodyKg)}"></label>
         <label class="field"><span>Pack weight (${unit('mass') === 'lb' ? 'lb' : 'kg'})</span><input class="input" type="number" min="0" step="any" name="packKg" value="${inputVal('body', f.packKg, 1)}"></label>
-        <label class="field"><span>Food density (${densUnit})</span><input class="input" type="number" min="${isImp() ? 60 : 200}" max="${isImp() ? 200 : 700}" step="any" name="density" value="${densVal}"></label>
+        <label class="field"><span>Food density (${densUnit}) ${tip('density')}</span><input class="input" type="number" min="${isImp() ? 60 : 200}" max="${isImp() ? 200 : 700}" step="any" name="density" value="${densVal}"></label>
         <div class="wide row between">
           <label class="check"><input type="checkbox" name="cold" ${f.cold ? 'checked' : ''}> Cold conditions (below freezing)</label>
           <button type="button" class="btn btn--sm" id="use-gear">Use my pack weight</button>
@@ -72,7 +48,7 @@ export function render(el) {
         <label class="field"><span>Your pace (${unit('pace')})</span><input class="input" type="number" min="0.5" step="any" name="paceKmh" value="${inputVal('pace', w.paceKmh)}"></label>
         <label class="field"><span>Climb in that stretch (${unit('elev')})</span><input class="input" type="number" min="0" step="any" name="gainM" value="${inputVal('elev', w.gainM)}"></label>
         <label class="field"><span>Daytime high (${unit('temp')})</span><input class="input" type="number" step="any" name="tempC" value="${inputVal('temp', w.tempC)}"></label>
-        <label class="check wide"><input type="checkbox" name="dryCamp" ${w.dryCamp ? 'checked' : ''}> Dry camp tonight (cook + overnight + morning)</label>
+        <label class="check wide"><input type="checkbox" name="dryCamp" ${w.dryCamp ? 'checked' : ''}> Dry camp tonight (cook + overnight + morning)</label> ${tip('dry')}
       </form>
       <hr class="cut">
       <div id="water-out" aria-live="polite"></div>
@@ -113,7 +89,7 @@ function renderFood() {
   const lbOrKg = (g) => show('mass', g);
   $('#food-out', root).innerHTML = `
     <div class="stats" style="grid-template-columns:repeat(2,minmax(0,1fr))">
-      <div class="stat stat--hl"><span class="label">Calories / day</span><span class="stat-value">${fmt(r50(r.perDay))}<small>kcal</small></span>
+      <div class="stat stat--hl"><span class="label">Calories / day ${tip('kcal')}</span><span class="stat-value">${fmt(r50(r.perDay))}<small>kcal</small></span>
         <span class="readout">Range ${fmt(r50(r.perDay * 0.9))}–${fmt(r50(r.perDay * 1.1))}</span></div>
       <div class="stat"><span class="label">Food / day</span><span class="stat-value">${lbOrKg(r.foodG)}</span>
         <span class="readout">${fmt(r.perDay / 1000 * 4.184, 1)} MJ</span></div>
@@ -138,7 +114,7 @@ function renderWater() {
   const lw = (L) => (isImp() ? `${fmt(L * 2.20462, 1)} lb` : `${fmt(L, 1)} kg`);
   $('#water-out', root).innerHTML = `
     <div class="stats" style="grid-template-columns:repeat(2,minmax(0,1fr))">
-      <div class="stat stat--hl"><span class="label">Carry</span><span class="stat-value">${fmt(r.total, 1)}<small>L</small></span>
+      <div class="stat stat--hl"><span class="label">Carry ${tip('carry')}</span><span class="stat-value">${fmt(r.total, 1)}<small>L</small></span>
         <span class="readout">${isImp() ? fmt(r.total * 33.814, 0) + ' fl oz · ' : ''}${lw(r.total)}</span></div>
       <div class="stat"><span class="label">Time to source</span><span class="stat-value">${Math.floor(r.hours)}<small>h</small> ${Math.round(r.hours % 1 * 60)}<small>m</small></span>
         <span class="readout">@ ${fmt(r.rate, 2)} L/h</span></div>

@@ -64,31 +64,64 @@ All paths are relative, so the app works from a sub-path. `.nojekyll` stops GitH
 ### After deploying
 
 - Change `og:image` in `index.html` to an absolute URL (e.g. `https://YOUR-USERNAME.github.io/basecamp/assets/og-image.png`), because social networks need absolute image URLs.
-- **Every time you change files, bump `VERSION` in `sw.js`** (e.g. `basecamp-v1.0.1`). Installed copies then update, and users see a "New version ready" toast.
+- **Every time you change files, bump `VERSION` in `sw.js`** and add any new files to `SHELL_FILES` there; `npm test` fails if you forget (e.g. `basecamp-v1.0.1`). Installed copies then update, and users see a "New version ready" toast.
 
 ## Project structure
 
 ```
-index.html              App shell: header, nav, view containers, icon sprite, meta/OG tags
+index.html              App shell: header, nav + "More" sheet, view containers, icon sprite, meta/OG tags
 manifest.webmanifest    PWA manifest
 sw.js                   Service worker (offline cache; bump VERSION on changes)
-css/styles.css          Design tokens, night-hike theme, components, print CSS
-js/app.js               Hash router, theme/units toggles, offline status, install prompt
-js/store.js             State, defaults, localStorage auto-save, import normalisation
+css/styles.css          Colorway tokens, components, motion, print CSS
+js/app.js               Lazy hash router with error boundaries, colorways, units, save status, PWA
+js/store.js             State, debounced auto-save, save status, storage-full handling, cross-tab sync
+js/core/calc.js         PURE maths: pack totals, rating, trip totals, food + water models
+js/core/codec.js        PURE share-link encoder/decoder
+js/core/schema.js       PURE data schema: defaults, versioned migrations, strict normalisation
+js/ui/tips.js           Tap-to-explain jargon popover
 js/units.js             Metric storage ⇄ imperial/metric display
 js/utils.js             DOM helpers, toasts, dialogs, downloads
-js/home.js              Dashboard
-js/gear.js, chart.js    Gear list, totals, rating, SVG donut
+js/home.js              Dashboard: hero product shot, setup guide, status, kit catalog
+js/gear.js, chart.js    Gear list (search, collapse, phone weight dock), SVG donut
 js/trip.js, map.js      Trip planner, itinerary, lazy-loaded Leaflet map
 js/weather.js           Open-Meteo forecast + geocoding
-js/food.js              Food & water models
+js/food.js              Food & water calculator UI
 js/checklist.js         Checklists
 js/guide.js             Guide pages
 js/share.js             Export/import, share links, CSV, trail card
-js/data/*.js            Editable content: categories, templates, checklist, guides
+js/data/*.js            Editable content: categories, templates, checklist, guides, glossary
+tests/*.test.mjs        Unit + project-integrity tests (npm test)
+.github/workflows/      Runs the tests on every push
 assets/                 topo.svg, OG image, icons
 tools/                  Scripts that regenerate topo.svg and the PNG icons/OG image
 ```
+
+## How it's built
+
+- **Pure core:** everything that does maths, encoding or data validation lives in `js/core/`. It has no DOM or storage access, so it is unit-tested in Node.
+- **One way in for data:** anything loaded from storage, imported from a file or received from another tab passes through `normalize()`. That function migrates old versions (`SCHEMA_VERSION` plus `MIGRATIONS` in `js/core/schema.js`) and coerces every field to a safe type, so corrupt or hostile data can't break the app.
+- **Lazy views with error boundaries:** each screen is loaded with `import()` the first time it opens, and the rest are prefetched when the browser is idle. If a screen throws or fails to load, it shows a "Module fault" card with recovery buttons instead of breaking the whole app.
+- **Saving:**
+  - Edits save automatically, with a short delay, and are written out immediately if the tab is hidden or closed.
+  - The header shows SAVING / SAVED / NOT SAVED.
+  - If storage is full or blocked, the user is told and offered a backup.
+  - Other open tabs pick up changes automatically.
+
+## Tests
+
+```bash
+npm test
+```
+
+You only need Node 18+; there are no dependencies to install. The suite covers:
+- the calculators
+- share-link round-trips and garbage rejection
+- schema migration and hostile-input normalisation
+- that every file is in the service-worker offline cache
+- that every import, `index.html` reference and manifest icon exists
+- that colorway ids match across CSS, JS and HTML
+
+GitHub runs these tests on every push (`.github/workflows/test.yml`).
 
 ## Editing content
 
@@ -97,6 +130,7 @@ All content is plain JavaScript data in `js/data/`, so you only need a text edit
 - **Guides:** `js/data/guides.js` has one object per guide (`slug`, `title`, `tag`, `blurb`, `html`). Add an object to create a new page; it shows up in the guide nav at `#/guide/<slug>`. Edit the safety disclaimer in `DISCLAIMER`.
 - **Starter gear templates:** `js/data/templates.js`. Each row is `[name, categoryId, grams, qty, flags]`, where flags are `'w'` (worn) and `'c'` (consumable).
 - **Gear categories and chart colours:** `js/data/categories.js`.
+- **Jargon explanations (the ⓘ buttons):** `js/data/glossary.js`. In a template, `${tip('key')}` adds a button.
 - **Default checklist:** `js/data/checklist.js`. Users who already have saved data keep their own list until they click "Restore default list".
 - **Colorways (themes):** there are five, Granite, Glacier, Black Sapphire, Forage and Ember, plus Auto, which follows the device's light/dark setting. Each is one `[data-theme="…"]` token block at the top of `css/styles.css`. To add a colorway:
   1. Copy a block and change its values. Keep `--accent` as a fill and `--accent-ink` for text, and check AA contrast.

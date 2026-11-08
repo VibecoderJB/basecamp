@@ -1,52 +1,16 @@
 // MODULE 07 — Save & Share: JSON export/import, shareable gear links, CSV, printable trail card.
-import { state, save, replaceState, defaults, STORAGE_KEY, rowToItem } from './store.js';
+import { state, save, replaceState, defaults, STORAGE_KEY } from './store.js';
 import { $, esc, icon, toast, download, modal, confirmBox, todayISO, niceDate, addDaysISO, coord, uid } from './utils.js';
 import { showWeight, show, unit, toD } from './units.js';
 import { CATEGORIES, catById } from './data/categories.js';
 import { gearTotals, rating } from './gear.js';
 import { tripTotals } from './trip.js';
 import { PIN_TYPES } from './map.js';
+import { encodeGear as coreEncode, decodeGear as coreDecode } from './core/codec.js';
 
-/* ---------- Share-link codec ----------
-   Gear list -> compact JSON -> deflate-raw (if supported) -> base64url, in the URL hash.
-   Prefix: 'z' = compressed, 'j' = plain. Nothing is sent to any server. */
-const CAT_IDS = CATEGORIES.map((c) => c.id);
-
-const b64url = (bytes) => {
-  let s = ''; for (let i = 0; i < bytes.length; i += 0x8000) s += String.fromCharCode(...bytes.subarray(i, i + 0x8000));
-  return btoa(s).replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, '');
-};
-const unb64url = (str) => {
-  const s = atob(str.replace(/-/g, '+').replace(/_/g, '/') + '==='.slice((str.length + 3) % 4));
-  return Uint8Array.from(s, (c) => c.charCodeAt(0));
-};
-const pipe = async (bytes, stream) => new Uint8Array(await new Response(new Blob([bytes]).stream().pipeThrough(stream)).arrayBuffer());
-
-export async function encodeGear(gear = state.gear) {
-  const payload = { n: gear.name, i: gear.items.map((i) => [i.name, Math.max(0, CAT_IDS.indexOf(i.cat)), Math.round(i.g * 10) / 10, i.qty, (i.worn ? 1 : 0) | (i.cons ? 2 : 0)]) };
-  const raw = new TextEncoder().encode(JSON.stringify(payload));
-  if ('CompressionStream' in window) {
-    try { return 'z' + b64url(await pipe(raw, new CompressionStream('deflate-raw'))); } catch { /* fall through */ }
-  }
-  return 'j' + b64url(raw);
-}
-
-export async function decodeGear(code) {
-  const kind = code[0], bytes = unb64url(code.slice(1));
-  let json;
-  if (kind === 'z') json = new TextDecoder().decode(await pipe(bytes, new DecompressionStream('deflate-raw')));
-  else if (kind === 'j') json = new TextDecoder().decode(bytes);
-  else throw new Error('Unknown share format');
-  const p = JSON.parse(json);
-  if (!Array.isArray(p.i)) throw new Error('Bad payload');
-  return {
-    name: String(p.n || 'Shared list').slice(0, 80),
-    items: p.i.slice(0, 500).map(([name, c, g, qty, f]) => ({
-      id: uid(), name: String(name ?? '').slice(0, 80), cat: CAT_IDS[c] || 'misc', g: Math.max(0, Number(g) || 0),
-      qty: Math.max(0, Math.round(Number(qty) || 0)), worn: !!(f & 1), cons: !!(f & 2),
-    })),
-  };
-}
+/* ---------- Share links: codec lives in core/codec.js ---------- */
+export const encodeGear = (gear = state.gear) => coreEncode(gear);
+export const decodeGear = (code) => coreDecode(code, uid);
 
 /** Handle #/share/<code>: preview, then replace or merge. */
 export async function handleShare(code) {

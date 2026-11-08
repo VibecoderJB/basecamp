@@ -75,10 +75,13 @@
   </svg>
 
   <header class="site-header">
-    <a class="brand" href="#/" aria-label="BASECAMP home">
-      <svg class="brand-mark" viewBox="0 0 64 64" aria-hidden="true"><path class="bm-fill" d="M0 0h64v50L50 64H0z"/><path class="bm-ink" d="M9 50 27 17l9 16 6-9 13 26z"/><path d="M23 50l4-8 4 8" fill="#ffd23f"/></svg>
-      <span>BASECAMP<small>FIELD KIT · V2.0</small></span>
-    </a>
+    <div class="brand-wrap">
+      <a class="brand" href="#/" aria-label="BASECAMP home">
+        <svg class="brand-mark" viewBox="0 0 64 64" aria-hidden="true"><path class="bm-fill" d="M0 0h64v50L50 64H0z"/><path class="bm-ink" d="M9 50 27 17l9 16 6-9 13 26z"/><path d="M23 50l4-8 4 8" fill="#ffd23f"/></svg>
+        <span>BASECAMP</span>
+      </a>
+      <span class="save-status" id="save-status" role="status" aria-live="polite" data-status="saved">SAVED</span>
+    </div>
     <div class="header-tools">
       <div class="seg" role="group" aria-label="Units">
         <button type="button" data-units="imperial" aria-pressed="true">IMP</button>
@@ -104,12 +107,28 @@
       <li><a href="#/gear"><svg aria-hidden="true"><use href="#i-pack"/></svg>Gear</a></li>
       <li><a href="#/trip"><svg aria-hidden="true"><use href="#i-map"/></svg>Trip</a></li>
       <li><a href="#/weather"><svg aria-hidden="true"><use href="#i-cloud"/></svg>Weather</a></li>
-      <li><a href="#/food"><svg aria-hidden="true"><use href="#i-food"/></svg>Food/H₂O</a></li>
-      <li><a href="#/checklist"><svg aria-hidden="true"><use href="#i-check"/></svg>Checks</a></li>
-      <li><a href="#/guide"><svg aria-hidden="true"><use href="#i-book"/></svg>Guides</a></li>
-      <li><a href="#/data"><svg aria-hidden="true"><use href="#i-share"/></svg>Save</a></li>
+      <li class="nav-x"><a href="#/food"><svg aria-hidden="true"><use href="#i-food"/></svg>Food/H₂O</a></li>
+      <li class="nav-x"><a href="#/checklist"><svg aria-hidden="true"><use href="#i-check"/></svg>Checks</a></li>
+      <li class="nav-x"><a href="#/guide"><svg aria-hidden="true"><use href="#i-book"/></svg>Guides</a></li>
+      <li class="nav-x"><a href="#/data"><svg aria-hidden="true"><use href="#i-share"/></svg>Save</a></li>
+      <li class="nav-more"><button type="button" id="more-btn" aria-haspopup="dialog" aria-expanded="false" aria-label="More pages">
+        <svg aria-hidden="true" viewBox="0 0 24 24" fill="currentColor"><circle cx="5" cy="12" r="2"/><circle cx="12" cy="12" r="2"/><circle cx="19" cy="12" r="2"/></svg>More</button></li>
     </ul>
   </nav>
+
+  <!-- Phone "More" sheet -->
+  <dialog class="more-sheet" id="more-sheet" aria-labelledby="more-title">
+    <div class="sheet-grip" aria-hidden="true"></div>
+    <div class="row between"><h2 id="more-title" class="label">More modules</h2><button type="button" class="btn btn--sm btn--ghost" data-close>Close</button></div>
+    <ul class="sheet-list">
+      <li><a href="#/food"><span class="sl-num">04</span><span><strong>Food &amp; Water</strong><span class="readout">Calories, food weight, water carry</span></span><svg aria-hidden="true"><use href="#i-food"/></svg></a></li>
+      <li><a href="#/checklist"><span class="sl-num">05</span><span><strong>Checklists</strong><span class="readout">Permits, fire bans, trip plan</span></span><svg aria-hidden="true"><use href="#i-check"/></svg></a></li>
+      <li><a href="#/guide"><span class="sl-num">06</span><span><strong>Trail Knowledge</strong><span class="readout">LNT, bears, water, blisters</span></span><svg aria-hidden="true"><use href="#i-book"/></svg></a></li>
+      <li><a href="#/data"><span class="sl-num">07</span><span><strong>Save &amp; Share</strong><span class="readout">Backup, share link, CSV</span></span><svg aria-hidden="true"><use href="#i-share"/></svg></a></li>
+      <li><a href="#/print"><span class="sl-num">TC</span><span><strong>Trail Card</strong><span class="readout">Printable one-pager</span></span><svg aria-hidden="true"><use href="#i-print"/></svg></a></li>
+    </ul>
+    <div class="lens-bar" aria-hidden="true"></div>
+  </dialog>
 
   <main id="main" tabindex="-1">
     <noscript><div class="callout callout--warn"><strong>JavaScript needed</strong>BASECAMP runs entirely in your browser and needs JavaScript enabled.</div></noscript>
@@ -125,9 +144,10 @@
   </main>
 
   <footer class="site-footer">
-    <hr class="cut">
+    <div class="footer-mark" aria-hidden="true">BASECAMP</div>
+    <div class="lens-bar" aria-hidden="true"></div>
     <div class="row between">
-      <p class="readout mb0">BASECAMP · FREE · NO ACCOUNT · NO ADS · DATA STAYS ON YOUR DEVICE</p>
+      <p class="readout mb0">FIELD KIT V3 · FREE · NO ACCOUNT · NO ADS · DATA STAYS ON YOUR DEVICE</p>
       <p class="readout mb0" id="net-status" aria-live="polite">● ONLINE</p>
     </div>
     <p class="help mt">Map data © <a href="https://www.openstreetmap.org/copyright" rel="noopener">OpenStreetMap</a> contributors. Weather by <a href="https://open-meteo.com/" rel="noopener">Open-Meteo</a> (CC BY 4.0). Guidance is general information, not a substitute for training, local regulations, or professional advice.</p>

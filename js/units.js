@@ -3,10 +3,8 @@
 import { state } from './store.js';
 import { fmt } from './utils.js';
 
-export const G_PER_OZ = 28.349523125;
-export const G_PER_LB = 453.59237;
-export const KM_PER_MI = 1.609344;
-export const M_PER_FT = 0.3048;
+import { G_PER_OZ, G_PER_LB, KM_PER_MI, M_PER_FT } from './core/calc.js';
+export { G_PER_OZ, G_PER_LB, KM_PER_MI, M_PER_FT };
 
 export const isImp = () => state.units !== 'metric';
 

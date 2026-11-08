@@ -1,6 +1,6 @@
 /* BASECAMP service worker — offline-first app shell.
    Bump VERSION whenever you change any file so clients pick up the update. */
-const VERSION = 'basecamp-v2.0.0';
+const VERSION = 'basecamp-v3.0.0';
 const SHELL = `${VERSION}-shell`;
 const RUNTIME = `${VERSION}-runtime`;
 const TILES = 'basecamp-tiles';        // kept across versions
@@ -11,7 +11,8 @@ const SHELL_FILES = [
   './', 'index.html', 'manifest.webmanifest', 'css/styles.css',
   'js/app.js', 'js/store.js', 'js/utils.js', 'js/units.js', 'js/home.js', 'js/gear.js', 'js/chart.js',
   'js/trip.js', 'js/map.js', 'js/weather.js', 'js/food.js', 'js/checklist.js', 'js/guide.js', 'js/share.js',
-  'js/data/categories.js', 'js/data/templates.js', 'js/data/checklist.js', 'js/data/guides.js',
+  'js/data/categories.js', 'js/data/templates.js', 'js/data/checklist.js', 'js/data/guides.js', 'js/data/glossary.js',
+  'js/core/calc.js', 'js/core/codec.js', 'js/core/schema.js', 'js/ui/tips.js',
   'assets/topo.svg', 'assets/icons/favicon.svg', 'assets/icons/icon-192.png', 'assets/icons/icon-512.png',
 ];
 // Third-party files cached opportunistically at install (install still succeeds if they fail).

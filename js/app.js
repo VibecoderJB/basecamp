@@ -1,29 +1,30 @@
-// BASECAMP — app shell: hash router, theme + units toggles, offline status, PWA install, print.
-import { state, save, subscribe } from './store.js';
-import { $, $$, toast } from './utils.js';
-import * as home from './home.js';
-import * as gear from './gear.js';
-import * as trip from './trip.js';
-import * as weather from './weather.js';
-import * as food from './food.js';
-import * as checklist from './checklist.js';
-import * as guide from './guide.js';
-import * as share from './share.js';
+// BASECAMP — app shell: lazy hash router with error boundaries, colorways, units,
+// save status, offline status, PWA install, print. Views are loaded on demand.
+import { state, save, subscribe, onSaveStatus, storageProblem } from './store.js';
+import { $, $$, toast, esc } from './utils.js';
+import { initTips } from './ui/tips.js';
 
-/* Route table: hash segment -> { module, title } */
+/* ---------- Route table ----------
+   load: lazy module import · num: module number shown in the view header
+   next: [route, label] — the "next step" link at the bottom of the view
+   fn: which export renders the view (default 'render') */
 const ROUTES = {
-  '': { mod: home, title: 'Field Kit' },
-  gear: { mod: gear, title: 'Gear List' },
-  trip: { mod: trip, title: 'Trip Planner' },
-  weather: { mod: weather, title: 'Weather' },
-  food: { mod: food, title: 'Food & Water' },
-  checklist: { mod: checklist, title: 'Checklists' },
-  guide: { mod: guide, title: 'Trail Knowledge' },
-  data: { mod: share, title: 'Save & Share' },
-  print: { mod: { render: share.renderPrint }, title: 'Trail Card' },
+  '': { load: () => import('./home.js'), title: 'Field Kit', num: '00' },
+  gear: { load: () => import('./gear.js'), title: 'Gear List', num: '01', next: ['trip', 'Plan the route'] },
+  trip: { load: () => import('./trip.js'), title: 'Trip Planner', num: '02', next: ['weather', 'Check the forecast'] },
+  weather: { load: () => import('./weather.js'), title: 'Weather', num: '03', next: ['food', 'Dial in food & water'] },
+  food: { load: () => import('./food.js'), title: 'Food & Water', num: '04', next: ['checklist', 'Run the pre-trip checklist'] },
+  checklist: { load: () => import('./checklist.js'), title: 'Checklists', num: '05', next: ['print', 'Print your trail card'] },
+  guide: { load: () => import('./guide.js'), title: 'Trail Knowledge', num: '06' },
+  data: { load: () => import('./share.js'), title: 'Save & Share', num: '07' },
+  print: { load: () => import('./share.js'), title: 'Trail Card', fn: 'renderPrint' },
 };
+/** Routes that live behind "More" in the phone tab bar */
+const MORE_ROUTES = ['food', 'checklist', 'guide', 'data', 'print'];
 
-let current = null; // { name, params }
+const loaded = new Map(); // route -> module
+let current = null;       // { name, params }
+let navToken = 0;         // guards against out-of-order async navigations
 
 /** Parse "#/guide/bears?x=1" -> { name:'guide', params:{ slug:'bears', x:'1' } } */
 function parseHash() {
@@ -31,13 +32,62 @@ function parseHash() {
   const [path, query = ''] = raw.split('?');
   const [name = '', ...rest] = path.split('/');
   const params = Object.fromEntries(new URLSearchParams(query));
-  if (rest[0]) params.slug = decodeURIComponent(rest.join('/'));
+  if (rest[0]) { try { params.slug = decodeURIComponent(rest.join('/')); } catch { params.slug = rest.join('/'); } }
   return { name, params };
 }
 
-function route() {
+async function loadRoute(r) {
+  if (!loaded.has(r)) loaded.set(r, await ROUTES[r].load());
+  return loaded.get(r);
+}
+
+/** Error boundary: a broken view shows a recovery card instead of a blank app. */
+function renderError(el, err, title) {
+  console.error(`BASECAMP view error (${title}):`, err);
+  el.innerHTML = `<div class="card fault" role="alert">
+    <div class="card-head"><h2>Module fault</h2><span class="label">${esc(title)}</span></div>
+    <p>This screen hit a problem and couldn't load. <strong>Your saved data is safe</strong> — it lives on this device.</p>
+    ${navigator.onLine ? '' : '<p class="help">You appear to be offline and this screen may not have been cached yet. Reconnect and try again.</p>'}
+    <div class="btn-row mt">
+      <button class="btn btn--primary" type="button" data-reload>Reload app</button>
+      <a class="btn" href="#/">Back to base</a>
+      <a class="btn btn--ghost" href="#/data">Back up my data</a>
+    </div>
+    <details class="mt"><summary class="label">Technical details</summary><pre class="readout" style="white-space:pre-wrap">${esc(err?.stack || err)}</pre></details>
+  </div>`;
+  el.querySelector('[data-reload]').addEventListener('click', () => location.reload());
+}
+
+/** Decorations shared by all module views: giant module number + next-step link. */
+function decorate(el, r) {
+  const def = ROUTES[r];
+  const head = el.querySelector('.view-head');
+  if (head && def.num && def.num !== '00' && !head.querySelector('.vh-num')) {
+    head.insertAdjacentHTML('beforeend', `<span class="vh-num" aria-hidden="true">${def.num}</span>`);
+  }
+  if (def.next && !el.querySelector('.next-step')) {
+    const [to, label] = def.next, n = ROUTES[to];
+    el.insertAdjacentHTML('beforeend', `<nav class="next-step" aria-label="Next step"><a href="#/${to}">
+      <span class="label">Next${n.num ? ` · Module ${n.num}` : ''}</span><strong>${esc(label)}</strong><span class="ns-arrow" aria-hidden="true">→</span></a></nav>`);
+  }
+}
+
+function renderView(r, el, params) {
+  const mod = loaded.get(r), def = ROUTES[r];
+  try {
+    mod[def.fn || 'render'](el, params);
+    mod.onShow?.();
+    decorate(el, r);
+  } catch (err) { renderError(el, err, def.title); }
+}
+
+async function route() {
   const { name, params } = parseHash();
-  if (name === 'share' && params.slug) { share.handleShare(params.slug); return; }
+  const token = ++navToken;
+  if (name === 'share' && params.slug) {
+    const share = await loadRoute('data');
+    share.handleShare(params.slug); return;
+  }
   const r = ROUTES[name] ? name : '';
   const def = ROUTES[r];
   const changed = !current || current.name !== r;
@@ -45,16 +95,16 @@ function route() {
 
   $$('.view').forEach((v) => { v.hidden = v.dataset.route !== r; });
   const el = $(`.view[data-route="${r}"]`);
-  def.mod.render(el, params);
-  def.mod.onShow?.();
-
-  // Nav state
-  $$('.nav a').forEach((a) => {
-    const target = a.getAttribute('href').replace(/^#\/?/, '');
-    if (target === r) a.setAttribute('aria-current', 'page'); else a.removeAttribute('aria-current');
-  });
-  const ib = $('#install-btn'); if (ib && deferredInstall) ib.hidden = false;
+  updateNav(r);
   document.title = `${def.title}${params.slug && r === 'guide' ? ' · Guide' : ''} — BASECAMP`;
+
+  if (!loaded.has(r)) {
+    el.innerHTML = `<div class="loading-view" role="status"><span class="spinner" aria-hidden="true"></span>LOADING ${esc(def.title.toUpperCase())}…</div>`;
+    try { await loadRoute(r); } catch (err) { if (token === navToken) renderError(el, err, def.title); return; }
+    if (token !== navToken) return; // user navigated away while loading
+  }
+  renderView(r, el, params);
+  const ib = $('#install-btn'); if (ib && deferredInstall) ib.hidden = false;
 
   // Move focus to the new view's heading for screen-reader users; reset scroll.
   if (changed) {
@@ -64,12 +114,54 @@ function route() {
   }
 }
 
-/** Re-render the visible view after global changes (units, imports, template loads). */
+/** Re-render the visible view after global changes (units, imports, template loads, other tabs). */
 subscribe((scope) => {
-  if (scope === 'all' || scope === 'units') {
-    if (current) ROUTES[current.name].mod.render($(`.view[data-route="${current.name}"]`), current.params);
+  if ((scope === 'all' || scope === 'units') && current && loaded.has(current.name)) {
+    renderView(current.name, $(`.view[data-route="${current.name}"]`), current.params);
   }
+  if (scope === 'sync') toast('Updated from another tab');
 });
+
+/* ---------- Navigation: phone tab bar with a "More" sheet ---------- */
+function updateNav(r) {
+  $$('.nav a, .more-sheet a').forEach((a) => {
+    const target = a.getAttribute('href').replace(/^#\/?/, '');
+    if (target === r) a.setAttribute('aria-current', 'page'); else a.removeAttribute('aria-current');
+  });
+  const more = $('#more-btn');
+  const inMore = MORE_ROUTES.includes(r);
+  more.classList.toggle('is-current', inMore);
+  more.setAttribute('aria-label', inMore ? `More, current page: ${ROUTES[r].title}` : 'More pages');
+}
+const sheet = $('#more-sheet');
+$('#more-btn').addEventListener('click', () => { sheet.showModal(); $('#more-btn').setAttribute('aria-expanded', 'true'); });
+sheet.addEventListener('close', () => $('#more-btn').setAttribute('aria-expanded', 'false'));
+sheet.addEventListener('click', (e) => { if (e.target === sheet || e.target.closest('a, [data-close]')) sheet.close(); });
+
+/* ---------- Save status (header readout) ---------- */
+let warnedFull = false;
+onSaveStatus(({ status, at }) => {
+  const el = $('#save-status');
+  el.dataset.status = status;
+  if (status === 'saving') el.textContent = 'SAVING…';
+  if (status === 'saved') el.textContent = `SAVED · ${new Date(at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}`;
+  if (status === 'error') {
+    el.textContent = 'NOT SAVED';
+    if (!warnedFull) {
+      warnedFull = true;
+      toast('Couldn’t save — this browser’s storage is full or blocked. Export a backup now.', { action: 'Back up', onAction: () => { location.hash = '#/data'; }, ms: 12000 });
+    }
+  } else warnedFull = false;
+});
+
+/* ---------- Global safety net ---------- */
+let lastErrToast = 0;
+function onGlobalError(err) {
+  console.error('BASECAMP:', err);
+  if (Date.now() - lastErrToast > 10000) { lastErrToast = Date.now(); toast('Something went wrong, but your data is safe. Try that again.'); }
+}
+addEventListener('error', (e) => { if (e.error) onGlobalError(e.error); });
+addEventListener('unhandledrejection', (e) => onGlobalError(e.reason));
 
 /* ---------- Colorways (themes) ----------
    Each id matches a [data-theme="…"] token block in css/styles.css (and the
@@ -99,6 +191,7 @@ function applyTheme() {
   $('#cw-name').textContent = pick.id === 'auto' ? `Auto · ${cw.name}` : cw.name;
   $('#cw-btn').setAttribute('aria-label', `Colorway: ${pick.id === 'auto' ? 'Auto, ' : ''}${cw.name}. Change colorway`);
   $$('#cw-options input').forEach((i) => { i.checked = i.value === state.theme; });
+  $$('.cw-ref').forEach((e) => { e.textContent = cw.name.toUpperCase(); });
 }
 
 /**
@@ -200,9 +293,17 @@ document.addEventListener('click', async (e) => {
 });
 
 /* ---------- Print from anywhere: render the trail card first ---------- */
-addEventListener('beforeprint', () => { if (current?.name !== 'print') share.renderPrint($('#view-print')); });
+addEventListener('beforeprint', () => {
+  const share = loaded.get('data') || loaded.get('print');
+  if (current?.name !== 'print' && share) share.renderPrint($('#view-print'));
+});
 
 /* ---------- Boot ---------- */
-applyTheme(); applyUnits(); netStatus();
+applyTheme(); applyUnits(); netStatus(); initTips();
+$('#save-status').textContent = `SAVED · ${new Date(state.updated).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}`;
+if (storageProblem()) toast('Couldn’t read saved data on this device — starting fresh. Import a backup from Save & Share if you have one.', { ms: 12000 });
 addEventListener('hashchange', route);
 route();
+// Warm the cache for the rest of the modules once the first screen is up (also enables print-from-anywhere).
+const idle = window.requestIdleCallback || ((fn) => setTimeout(fn, 1500));
+idle(() => Object.keys(ROUTES).forEach((r) => loadRoute(r).catch(() => {})));

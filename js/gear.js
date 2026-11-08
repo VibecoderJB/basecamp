@@ -1,40 +1,22 @@
 // MODULE 01 — Gear List Builder + Pack Weight Calculator
 import { state, save, rowToItem } from './store.js';
 import { $, $$, esc, uid, num, icon, toast, confirmBox } from './utils.js';
-import { unit, inputVal, fromD, showWeight, G_PER_LB } from './units.js';
+import { unit, inputVal, fromD, showWeight } from './units.js';
+import { gearTotals as coreGearTotals, rating } from './core/calc.js';
 import { CATEGORIES, catById } from './data/categories.js';
 import { TEMPLATES } from './data/templates.js';
 import { donut } from './chart.js';
+import { tip } from './ui/tips.js';
 
-/* ---------- Pure calculations (also used by home, print, food) ---------- */
-export function gearTotals(items = state.gear.items) {
-  const t = { base: 0, worn: 0, cons: 0, pack: 0, skin: 0, count: 0, byCat: {} };
-  for (const i of items) {
-    const w = (Number(i.g) || 0) * (Number(i.qty) || 0);
-    t.count += Number(i.qty) || 0;
-    if (i.worn) t.worn += w; else if (i.cons) t.cons += w; else t.base += w;
-    const bucket = (t.byCat[i.cat] ||= { base: 0, pack: 0, skin: 0 });
-    if (!i.worn && !i.cons) bucket.base += w;
-    if (!i.worn) bucket.pack += w;
-    bucket.skin += w;
-  }
-  t.pack = t.base + t.cons;
-  t.skin = t.pack + t.worn;
-  return t;
-}
-
-/** Base-weight class. Common community thresholds: UL < 10 lb, LW 10–20 lb, Traditional > 20 lb. */
-export function rating(baseG) {
-  const lb = baseG / G_PER_LB;
-  if (lb < 5) return { tier: 'sul', name: 'Super Ultralight', idx: 0, note: 'Under 5 lb base. Minimal margin. Make sure safety gear made the cut.' };
-  if (lb < 10) return { tier: 'ul', name: 'Ultralight', idx: 0, note: 'Under 10 lb base. Fast and light — double-check your 10 Essentials.' };
-  if (lb < 20) return { tier: 'lw', name: 'Lightweight', idx: 1, note: '10–20 lb base. A comfortable, capable kit for most trips.' };
-  return { tier: 'trad', name: 'Traditional', idx: 2, note: 'Over 20 lb base. Normal for winter or group gear — the Big 3 is the fastest place to cut weight.' };
-}
+/* ---------- Calculations live in core/calc.js (pure + unit-tested) ---------- */
+export const gearTotals = (items = state.gear.items) => coreGearTotals(items);
+export { rating };
 
 /* ---------- Rendering ---------- */
 let root;
 let collapsed = new Set();
+let query = '';      // search filter
+let dockObs = null;  // IntersectionObserver for the phone weight dock
 
 export function render(el) {
   root = el;
@@ -46,7 +28,8 @@ export function render(el) {
     <p>Build your kit, flag what you wear and what you eat or drink, and watch your base weight drop. Weights are per item — quantity multiplies.</p>
   </header>
 
-  <div class="stats" id="gear-stats" aria-live="polite"></div>
+  <div class="stats" id="gear-stats"></div>
+  <div class="gear-dock" id="gear-dock" aria-hidden="true"></div>
 
   <div class="grid mt">
     <div class="span-8 stack">
@@ -70,7 +53,11 @@ export function render(el) {
       </div>
 
       <div class="gear-toolbar">
+        <label class="search"><span class="sr-only">Search your gear</span>
+          <svg aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="6.5"/><path d="m16 16 4.5 4.5"/></svg>
+          <input class="input" type="search" id="gear-q" placeholder="Search gear…" value="${esc(query)}" autocomplete="off"></label>
         <div class="row">
+          <button class="btn btn--sm btn--ghost" type="button" data-collapse-all aria-label="Collapse or expand all categories">Collapse all</button>
           <span class="label">Sort</span>
           <button class="btn btn--sm" type="button" data-sort="heavy">Heaviest</button>
           <button class="btn btn--sm" type="button" data-sort="az">A–Z</button>
@@ -80,11 +67,12 @@ export function render(el) {
           <button type="button" data-units="metric" aria-pressed="${u === 'g'}">g / kg</button>
         </div>
       </div>
+      <p class="readout" id="gear-filter-note" role="status" aria-live="polite"></p>
       <div id="gear-list"></div>
     </div>
 
     <aside class="span-4 stack" aria-label="Pack summary">
-      <div class="card"><div class="card-head"><h2>Pack Class</h2><span class="label">By base wt</span></div><div id="gear-rating"></div></div>
+      <div class="card"><div class="card-head"><h2>Pack Class ${tip('class')}</h2><span class="label">By base wt</span></div><div id="gear-rating"></div></div>
       <div class="card">
         <div class="card-head"><h2>Breakdown</h2>
           <div class="seg" role="group" aria-label="Chart weight type">
@@ -109,6 +97,13 @@ export function render(el) {
   renderSummary();
   $('#gear-name', root).addEventListener('input', (e) => { state.gear.name = e.target.value; save('gear'); });
   $('#gear-add', root).addEventListener('submit', onAdd);
+  $('#gear-q', root).addEventListener('input', (e) => { query = e.target.value; renderList(); });
+  dockObs?.disconnect();
+  if ('IntersectionObserver' in window) {
+    const dock = $('#gear-dock', root);
+    dockObs = new IntersectionObserver(([e]) => dock.classList.toggle('show', !e.isIntersecting && e.boundingClientRect.top < 0));
+    dockObs.observe($('#gear-stats', root));
+  }
   if (!el.dataset.bound) { bindRoot(); el.dataset.bound = '1'; }
 }
 
@@ -138,11 +133,16 @@ function renderList() {
     host.innerHTML = `<div class="empty">Pack's empty. Add your first item above or load a starter template.</div>`;
     return;
   }
+  const q = query.trim().toLowerCase();
+  const match = (i) => !q || i.name.toLowerCase().includes(q) || (catById[i.cat]?.name || '').toLowerCase().includes(q);
+  const shown = items.filter(match).length;
+  $('#gear-filter-note', root).textContent = q ? `${shown} of ${items.length} items match “${query.trim()}”` : '';
+  if (q && !shown) { host.innerHTML = `<div class="empty">Nothing matches “${esc(query.trim())}”. <button type="button" class="btn btn--sm mt" data-clear-q>Clear search</button></div>`; return; }
   host.innerHTML = CATEGORIES.map((c) => {
-    const list = items.filter((i) => (catById[i.cat] ? i.cat : 'misc') === c.id);
+    const list = items.filter((i) => (catById[i.cat] ? i.cat : 'misc') === c.id && match(i));
     if (!list.length) return '';
     const sub = list.reduce((s, i) => s + i.g * i.qty, 0);
-    const open = !collapsed.has(c.id);
+    const open = q ? true : !collapsed.has(c.id);
     return `<section class="gear-cat" data-cat="${c.id}" aria-label="${esc(c.name)}">
       <header>
         <span class="swatch" style="background:${c.color}" aria-hidden="true"></span>
@@ -159,11 +159,15 @@ function renderSummary() {
   const t = gearTotals();
   const r = rating(t.base);
   $('#gear-stats', root).innerHTML = `
-    <div class="stat stat--hl"><span class="label">Base weight</span><span class="stat-value">${showWeight(t.base, { compact: true })}</span></div>
-    <div class="stat"><span class="label">Worn</span><span class="stat-value">${showWeight(t.worn, { compact: true })}</span></div>
-    <div class="stat"><span class="label">Consumables</span><span class="stat-value">${showWeight(t.cons, { compact: true })}</span></div>
-    <div class="stat"><span class="label">Total pack</span><span class="stat-value">${showWeight(t.pack, { compact: true })}</span>
-      <span class="readout">Skin-out ${showWeight(t.skin, { compact: true })}</span></div>`;
+    <div class="stat stat--hl"><span class="label">Base weight ${tip('base')}</span><span class="stat-value">${showWeight(t.base, { compact: true })}</span></div>
+    <div class="stat"><span class="label">Worn ${tip('worn')}</span><span class="stat-value">${showWeight(t.worn, { compact: true })}</span></div>
+    <div class="stat"><span class="label">Consumables ${tip('cons')}</span><span class="stat-value">${showWeight(t.cons, { compact: true })}</span></div>
+    <div class="stat"><span class="label">Total pack ${tip('pack')}</span><span class="stat-value">${showWeight(t.pack, { compact: true })}</span>
+      <span class="readout">Skin-out ${showWeight(t.skin, { compact: true })} ${tip('skin')}</span></div>`;
+  // Phone dock: compact readout pinned above the tab bar while the stats strip is off-screen
+  $('#gear-dock', root).innerHTML = `<span><span class="label">Base</span><b>${showWeight(t.base, { compact: true })}</b></span>
+    <span><span class="label">Pack</span><b>${showWeight(t.pack, { compact: true })}</b></span>
+    <span class="dock-tier" data-tier="${r.tier}">${r.name}</span>`;
 
   $('#gear-rating', root).innerHTML = `
     <div class="rating" data-tier="${r.tier}"><div><span class="label">Class</span><div class="rating-name">${r.name}</div></div></div>
@@ -249,6 +253,14 @@ function bindRoot() {
       state.gear.items.splice(idx, 1);
       renderList(); renderSummary(); save('gear');
       toast(`Removed ${item.name}`, { action: 'Undo', onAction: () => { state.gear.items.splice(idx, 0, item); renderList(); renderSummary(); save('gear'); } });
+    } else if (t.hasAttribute('data-collapse-all')) {
+      const ids = [...new Set(state.gear.items.map((i) => i.cat))];
+      const allClosed = ids.every((id) => collapsed.has(id));
+      collapsed = allClosed ? new Set() : new Set(ids);
+      t.textContent = allClosed ? 'Collapse all' : 'Expand all';
+      renderList();
+    } else if (t.hasAttribute('data-clear-q')) {
+      query = ''; $('#gear-q', root).value = ''; renderList(); $('#gear-q', root).focus();
     } else if (t.dataset.collapse) {
       const id = t.dataset.collapse; collapsed.has(id) ? collapsed.delete(id) : collapsed.add(id);
       renderList(); $(`[data-collapse="${id}"]`, root)?.focus();

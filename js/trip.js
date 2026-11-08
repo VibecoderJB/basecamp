@@ -3,17 +3,13 @@ import { state, save } from './store.js';
 import { $, $$, esc, uid, num, icon, toast, confirmBox, coord, addDaysISO, niceDate, clamp } from './utils.js';
 import { unit, inputVal, fromD, show, toD } from './units.js';
 import { loadLeaflet, pinIcon, osmLayer, PIN_TYPES } from './map.js';
+import { tripTotals as coreTripTotals } from './core/calc.js';
 
 let root;
 // Map objects persist across re-renders: the map's DOM node is re-attached rather than rebuilt.
 let L, map, mapEl, markers = new Map(), dropType = null;
 
-export const tripTotals = (days = state.trip.days) => ({
-  dist: days.reduce((s, d) => s + (Number(d.distKm) || 0), 0),
-  gain: days.reduce((s, d) => s + (Number(d.gainM) || 0), 0),
-  loss: days.reduce((s, d) => s + (Number(d.lossM) || 0), 0),
-  n: days.length,
-});
+export const tripTotals = (days = state.trip.days) => coreTripTotals(days);
 
 const dayDate = (i) => (state.trip.start ? addDaysISO(state.trip.start, i) : '');
 

@@ -129,6 +129,11 @@ export function render(el, params = {}) {
     const p = state.trip.pins.find((x) => x.id === params.pin);
     if (p) { $('#wx-pin', root).value = p.id; setLoc({ name: p.label, lat: p.lat, lng: p.lng }); return; }
   }
+  // First visit: default to the trip's trailhead (or first pin) so there's a forecast immediately
+  if (!state.weather.loc && state.trip.pins.length) {
+    const p = state.trip.pins.find((x) => x.type === 'trailhead') || state.trip.pins[0];
+    $('#wx-pin', root).value = p.id; setLoc({ name: p.label, lat: p.lat, lng: p.lng }); return;
+  }
   renderLocation();
   load();
 }
