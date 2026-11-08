@@ -1,5 +1,7 @@
 # BASECAMP — free backpacking field kit
 
+**Live:** https://vibecoderjb.github.io/basecamp/
+
 A free, offline-capable web app for backpackers. No account, no ads, no paywall, no backend.
 Everything runs in the browser, and your data stays in `localStorage` on your device.
 
@@ -35,7 +37,11 @@ Then open <http://localhost:8080>. (`npx serve .` works too.)
 ### GitHub Pages
 
 1. Create an empty repository on GitHub called `basecamp` (no README).
-2. From this folder, run:
+2. Either click **uploading an existing file** and drag in the *contents* of this folder (so `index.html` sits at the top level of the repo, not inside a folder), or from this folder run:
+
+```bash
+git init -b main && git add -A && git commit -m "BASECAMP"
+```
 
 ```bash
 git remote add origin https://github.com/YOUR-USERNAME/basecamp.git
