@@ -98,7 +98,13 @@ All content is plain JavaScript data in `js/data/`, so you only need a text edit
 - **Starter gear templates:** `js/data/templates.js`. Each row is `[name, categoryId, grams, qty, flags]`, where flags are `'w'` (worn) and `'c'` (consumable).
 - **Gear categories and chart colours:** `js/data/categories.js`.
 - **Default checklist:** `js/data/checklist.js`. Users who already have saved data keep their own list until they click "Restore default list".
-- **Colours, fonts and spacing:** the `:root` tokens at the top of `css/styles.css`. Dark ("night hike") values are in the two `data-theme="dark"` / `prefers-color-scheme` blocks just below.
+- **Colorways (themes):** there are five, Granite, Glacier, Black Sapphire, Forage and Ember, plus Auto, which follows the device's light/dark setting. Each is one `[data-theme="…"]` token block at the top of `css/styles.css`. To add a colorway:
+  1. Copy a block and change its values. Keep `--accent` as a fill and `--accent-ink` for text, and check AA contrast.
+  2. Add an entry to `COLORWAYS` in `js/app.js` (swatch colours, browser bar colour, dark or light).
+  3. Add the id to the regex in the pre-paint script in `index.html` and to the allowed list in `normalize()` in `js/store.js`.
+
+  Switching colorways animates as a circular reveal (View Transitions API), with a colour cross-fade as the fallback.
+- **Fonts and spacing:** the shared tokens in the first `:root` block of `css/styles.css`. The iridescent accent is `--lens`.
 - **Calculator formulas:** `calcFood` and `calcWater` in `js/food.js` are documented inline. Rating thresholds are in `rating()` in `js/gear.js`.
 
 To regenerate artwork:

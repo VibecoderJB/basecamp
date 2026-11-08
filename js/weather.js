@@ -184,7 +184,7 @@ function renderForecast() {
   const h = d.hourly; let start = h.time.findIndex((t) => t >= (cur.time || '').slice(0, 13)); if (start < 0) start = 0;
   const hrs = h.time.slice(start, start + 24).map((t, i) => ({ t: t.slice(11, 13), p: h.precipitation_probability?.[start + i] ?? 0, temp: h.temperature_2m[start + i] }));
   $('#wx-hourly', root).innerHTML = hrs.length ? `<div class="card"><div class="card-head"><h2>Next 24 h</h2><span class="label">Precip chance · temp</span></div>
-    <div class="scroll-x"><div class="bars" style="min-width:560px" role="img" aria-label="Hourly chance of precipitation: ${hrs.filter((_, i) => i % 3 === 0).map((x) => `${x.t}:00 ${x.p}%`).join(', ')}">
+    <div class="scroll-x" tabindex="0" aria-label="Next 24 hours chart, scrolls sideways"><div class="bars" style="min-width:560px" role="img" aria-label="Hourly chance of precipitation: ${hrs.filter((_, i) => i % 3 === 0).map((x) => `${x.t}:00 ${x.p}%`).join(', ')}">
       ${hrs.map((x) => `<div style="height:${Math.max(2, x.p)}%;background:var(--glacier)" title="${x.t}:00 · ${x.p}% · ${show('temp', x.temp)}"></div>`).join('')}</div>
     <div class="bars-x" style="min-width:560px" aria-hidden="true">${hrs.map((x, i) => `<span>${i % 3 === 0 ? `${x.t}h<br>${fmt(toD('temp', x.temp))}°` : ''}</span>`).join('')}</div></div></div>` : '';
 

@@ -1,6 +1,6 @@
 /* BASECAMP service worker — offline-first app shell.
    Bump VERSION whenever you change any file so clients pick up the update. */
-const VERSION = 'basecamp-v1.0.3';
+const VERSION = 'basecamp-v2.0.0';
 const SHELL = `${VERSION}-shell`;
 const RUNTIME = `${VERSION}-runtime`;
 const TILES = 'basecamp-tiles';        // kept across versions

@@ -1,6 +1,6 @@
 // BASECAMP — app shell: hash router, theme + units toggles, offline status, PWA install, print.
 import { state, save, subscribe } from './store.js';
-import { $, $$, toast, icon } from './utils.js';
+import { $, $$, toast } from './utils.js';
 import * as home from './home.js';
 import * as gear from './gear.js';
 import * as trip from './trip.js';
@@ -71,23 +71,88 @@ subscribe((scope) => {
   }
 });
 
-/* ---------- Theme: auto -> light -> dark ---------- */
-const THEMES = ['auto', 'light', 'dark'];
-const THEME_ICON = { auto: 'auto', light: 'sun', dark: 'moon' };
-const THEME_LABEL = { auto: 'auto (follows device)', light: 'day', dark: 'night hike' };
+/* ---------- Colorways (themes) ----------
+   Each id matches a [data-theme="…"] token block in css/styles.css (and the
+   pre-paint script in index.html). a/b = swatch colours, bar = browser UI colour. */
+export const COLORWAYS = [
+  { id: 'auto', name: 'Auto', note: 'Granite by day, Sapphire by night' },
+  { id: 'granite', name: 'Granite', note: 'Warm stone · blaze', a: '#ecebe6', b: '#f0552a', bar: '#ecebe6', dark: false },
+  { id: 'glacier', name: 'Glacier', note: 'Ice grey · cyan', a: '#e5ebee', b: '#3fc1e4', bar: '#e5ebee', dark: false },
+  { id: 'sapphire', name: 'Black Sapphire', note: 'Night hike · violet lens', a: '#0a0e13', b: '#8b93ff', bar: '#0a0e13', dark: true },
+  { id: 'forage', name: 'Forage', note: 'Olive drab · lime', a: '#3a4230', b: '#cde34a', bar: '#20241b', dark: true },
+  { id: 'ember', name: 'Ember', note: 'Burnt clay · hot orange', a: '#3a2a20', b: '#ff6a2b', bar: '#17110e', dark: true },
+];
+const cwById = Object.fromEntries(COLORWAYS.map((c) => [c.id, c]));
+const prefersDark = matchMedia('(prefers-color-scheme: dark)');
+const reducedMotion = matchMedia('(prefers-reduced-motion: reduce)');
+/** 'auto' resolves to a real colorway based on the OS setting */
+const resolve = (id) => (id === 'auto' || !cwById[id] ? (prefersDark.matches ? 'sapphire' : 'granite') : id);
+
 function applyTheme() {
-  document.documentElement.dataset.theme = state.theme;
-  const b = $('#theme-toggle');
-  b.innerHTML = icon(THEME_ICON[state.theme]);
-  b.setAttribute('aria-label', `Theme: ${THEME_LABEL[state.theme]}. Switch theme`);
-  const dark = state.theme === 'dark' || (state.theme === 'auto' && matchMedia('(prefers-color-scheme: dark)').matches);
-  $('meta[name="theme-color"]').content = dark ? '#0d1510' : '#14251b';
+  const cw = cwById[resolve(state.theme)];
+  const root = document.documentElement;
+  root.dataset.theme = cw.id;
+  root.dataset.scheme = cw.dark ? 'dark' : 'light';
+  $('meta[name="theme-color"]').content = cw.bar;
+  const pick = cwById[state.theme] || cwById.auto;
+  $('#cw-sw').style.cssText = `--a:${cw.a};--b:${cw.b}`;
+  $('#cw-name').textContent = pick.id === 'auto' ? `Auto · ${cw.name}` : cw.name;
+  $('#cw-btn').setAttribute('aria-label', `Colorway: ${pick.id === 'auto' ? 'Auto, ' : ''}${cw.name}. Change colorway`);
+  $$('#cw-options input').forEach((i) => { i.checked = i.value === state.theme; });
 }
-$('#theme-toggle').addEventListener('click', () => {
-  state.theme = THEMES[(THEMES.indexOf(state.theme) + 1) % THEMES.length];
-  save('theme'); applyTheme(); toast(`Theme: ${THEME_LABEL[state.theme]}`, { ms: 1800 });
+
+/**
+ * Switch colorway with a transition:
+ *  - View Transitions API: circular "lens" reveal expanding from (x, y)
+ *  - otherwise: a smooth cross-fade of every colour (html.theme-fade)
+ */
+function setTheme(id, x = innerWidth - 40, y = 30) {
+  const commit = () => { state.theme = id; save('theme'); applyTheme(); };
+  if (resolve(id) === document.documentElement.dataset.theme || reducedMotion.matches) return commit();
+  if (document.startViewTransition) {
+    const t = document.startViewTransition(commit);
+    t.ready.then(() => {
+      const r = Math.hypot(Math.max(x, innerWidth - x), Math.max(y, innerHeight - y));
+      document.documentElement.animate(
+        { clipPath: [`circle(0px at ${x}px ${y}px)`, `circle(${r}px at ${x}px ${y}px)`] },
+        { duration: 750, easing: 'cubic-bezier(.7,0,.2,1)', pseudoElement: '::view-transition-new(root)' });
+    }).catch(() => {});
+  } else {
+    const cl = document.documentElement.classList;
+    cl.add('theme-fade'); commit();
+    setTimeout(() => cl.toggle('theme-fade', false), 650);
+  }
+}
+
+// Build the swatch picker
+$('#cw-options').innerHTML = COLORWAYS.map((c) => {
+  const sw = c.id === 'auto' ? 'background:linear-gradient(135deg,#ecebe6 0 50%,#0a0e13 50% 100%)' : `--a:${c.a};--b:${c.b}`;
+  return `<label class="cw-opt"><input type="radio" name="colorway" value="${c.id}">
+    <span class="sw" style="${sw}" aria-hidden="true"></span>
+    <span><strong>${c.name}</strong><span class="readout">${c.note}</span></span></label>`;
+}).join('');
+
+const cwBtn = $('#cw-btn'), cwPanel = $('#cw-panel');
+function togglePanel(open = cwPanel.hidden) {
+  cwPanel.hidden = !open; cwBtn.setAttribute('aria-expanded', open);
+  if (open) ($('#cw-options input:checked') || $('#cw-options input')).focus();
+}
+cwBtn.addEventListener('click', () => togglePanel());
+let lastPointer = null;
+cwPanel.addEventListener('pointerdown', (e) => { lastPointer = { x: e.clientX, y: e.clientY }; });
+cwPanel.addEventListener('change', (e) => {
+  if (e.target.name !== 'colorway') return;
+  // Reveal from the tapped swatch (pointer) or from the picker button (keyboard)
+  const bb = cwBtn.getBoundingClientRect();
+  const o = lastPointer || { x: bb.left + 18, y: bb.top + bb.height / 2 };
+  lastPointer = null;
+  setTheme(e.target.value, o.x, o.y);
 });
-matchMedia('(prefers-color-scheme: dark)').addEventListener?.('change', applyTheme);
+// Enter closes the panel; Escape or a click outside also closes it
+cwPanel.addEventListener('keydown', (e) => { if (e.key === 'Enter') { e.preventDefault(); togglePanel(false); cwBtn.focus(); } });
+document.addEventListener('keydown', (e) => { if (e.key === 'Escape' && !cwPanel.hidden) { togglePanel(false); cwBtn.focus(); } });
+document.addEventListener('pointerdown', (e) => { if (!cwPanel.hidden && !e.target.closest('.colorway')) togglePanel(false); });
+prefersDark.addEventListener?.('change', () => { if (state.theme === 'auto') setTheme('auto'); });
 
 /* ---------- Units (global; any [data-units] button anywhere) ---------- */
 function applyUnits() {

@@ -53,7 +53,10 @@ export function normalize(raw) {
   out.checklist = Array.isArray(raw.checklist) ? raw.checklist : d.checklist;
   out.weather = { ...d.weather, ...(raw.weather || {}) };
   out.units = raw.units === 'metric' ? 'metric' : 'imperial';
-  out.theme = ['light', 'dark', 'auto'].includes(raw.theme) ? raw.theme : 'auto';
+  // v1 used light/dark; map them onto the matching colorways
+  const legacy = { light: 'granite', dark: 'sapphire' };
+  const th = legacy[raw.theme] || raw.theme;
+  out.theme = ['auto', 'granite', 'glacier', 'sapphire', 'forage', 'ember'].includes(th) ? th : 'auto';
   out.v = SCHEMA_VERSION;
   return out;
 }

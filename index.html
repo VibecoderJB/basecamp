@@ -1,5 +1,5 @@
 <!doctype html>
-<html lang="en" data-theme="auto">
+<html lang="en" data-theme="granite" data-scheme="light">
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
@@ -29,12 +29,19 @@
   <!-- Fonts: Archivo (variable width = expanded headlines) + JetBrains Mono -->
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Archivo:wdth,wght@62..125,400..900&family=JetBrains+Mono:wght@400;600;700;800&display=swap">
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Archivo:ital,wdth,wght@0,62..125,400..900;1,62..125,400..900&family=JetBrains+Mono:wght@400;600;700;800&display=swap">
 
   <link rel="stylesheet" href="css/styles.css">
-  <!-- Set theme before paint to avoid a flash -->
+  <!-- Resolve the saved colorway before first paint (no flash). Keep in sync with COLORWAYS in js/app.js -->
   <script>
-    try { var t = JSON.parse(localStorage.getItem('basecamp:v1') || '{}').theme; if (t) document.documentElement.dataset.theme = t; } catch (e) {}
+    (function () {
+      var dark = { sapphire: 1, forage: 1, ember: 1 }, t = 'auto';
+      try { t = JSON.parse(localStorage.getItem('basecamp:v1') || '{}').theme || 'auto'; } catch (e) {}
+      if (t === 'light') t = 'granite'; if (t === 'dark') t = 'sapphire';
+      if (t === 'auto' || !/^(granite|sapphire|forage|glacier|ember)$/.test(t)) t = matchMedia('(prefers-color-scheme: dark)').matches ? 'sapphire' : 'granite';
+      document.documentElement.dataset.theme = t;
+      document.documentElement.dataset.scheme = dark[t] ? 'dark' : 'light';
+    })();
   </script>
   <script type="module" src="js/app.js"></script>
 </head>
@@ -69,17 +76,25 @@
 
   <header class="site-header">
     <a class="brand" href="#/" aria-label="BASECAMP home">
-      <svg class="brand-mark" viewBox="0 0 64 64" aria-hidden="true"><rect x="2" y="2" width="60" height="60" rx="14" fill="#ff5a1f" stroke="currentColor" stroke-width="4"/><path d="M12 48 28 18l8 14 5-8 11 24z" fill="#14251b"/><path d="M24 48l4-8 4 8" fill="#ffd23f"/></svg>
-      <span>BASECAMP<small>FIELD KIT · V1.0</small></span>
+      <svg class="brand-mark" viewBox="0 0 64 64" aria-hidden="true"><path class="bm-fill" d="M0 0h64v50L50 64H0z"/><path class="bm-ink" d="M9 50 27 17l9 16 6-9 13 26z"/><path d="M23 50l4-8 4 8" fill="#ffd23f"/></svg>
+      <span>BASECAMP<small>FIELD KIT · V2.0</small></span>
     </a>
     <div class="header-tools">
       <div class="seg" role="group" aria-label="Units">
         <button type="button" data-units="imperial" aria-pressed="true">IMP</button>
         <button type="button" data-units="metric" aria-pressed="false">MET</button>
       </div>
-      <button type="button" class="btn btn--sm btn--icon" id="theme-toggle" aria-label="Theme: auto. Switch theme" title="Day / Night hike mode">
-        <svg aria-hidden="true"><use href="#i-auto"/></svg>
-      </button>
+      <div class="colorway">
+        <button type="button" class="cw-btn" id="cw-btn" aria-expanded="false" aria-controls="cw-panel" aria-label="Colorway: Granite. Change colorway">
+          <span class="sw" id="cw-sw" aria-hidden="true"></span><span class="cw-name" id="cw-name">Granite</span>
+        </button>
+        <div class="cw-panel" id="cw-panel" hidden>
+          <fieldset>
+            <legend class="label">Colorway</legend>
+            <div id="cw-options"></div>
+          </fieldset>
+        </div>
+      </div>
     </div>
   </header>
 

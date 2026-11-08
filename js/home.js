@@ -23,18 +23,32 @@ export function render(el) {
   const wx = state.weather.cache?.data;
   el.innerHTML = `
   <section class="hero topo" aria-labelledby="h-home">
-    <div class="coord-strip"><span class="readout">${th ? coord(th.lat, th.lng) : '44.37°N / 110.58°W'} — ELEV ${th ? '—' : '7,733 FT'}</span><span class="readout">SPEC SHEET 001</span></div>
-    <span class="kicker">Free backpacking field kit</span>
-    <h1 id="h-home">Pack light.<br><span class="accent">Plan right.</span></h1>
-    <p>Gear weights, trip maps, mountain weather and food & water math — in one free app that works with no signal. No account. No ads. Your data never leaves your device.</p>
-    <div class="btn-row mt">
-      <a class="btn btn--primary" href="#/gear">${icon('pack')} Build my pack</a>
-      <a class="btn" href="#/trip">${icon('map')} Plan a trip</a>
-      <button class="btn btn--signal" type="button" id="install-btn" hidden>${icon('down')} Install app</button>
+    <div class="coord-strip"><span class="readout">${th ? coord(th.lat, th.lng) : '44.37°N / 110.58°W'} — ELEV ${th ? '—' : '7,733 FT'}</span><span class="readout">REF BC-001 · FIELD KIT</span></div>
+    <div>
+      <span class="kicker">Free backpacking field kit</span>
+      <h1 id="h-home">Pack light.<br><span class="accent">Plan right.</span></h1>
+      <p>Gear weights, trip maps, mountain weather and food &amp; water math — engineered into one free app that works with zero bars.</p>
+      <div class="btn-row mt">
+        <a class="btn btn--primary" href="#/gear">${icon('pack')} Build my pack</a>
+        <a class="btn" href="#/trip">${icon('map')} Plan a trip</a>
+        <button class="btn btn--signal" type="button" id="install-btn" hidden>${icon('down')} Install app</button>
+      </div>
+      <div class="hero-meta">
+        <span class="tag tag--blaze">No sign-up</span><span class="tag tag--glacier">Works offline</span><span class="tag tag--signal">$0 forever</span><span class="tag tag--moss">Open data</span>
+      </div>
     </div>
-    <div class="hero-meta">
-      <span class="tag tag--blaze">No sign-up</span><span class="tag tag--glacier">Works offline</span><span class="tag tag--signal">$0 forever</span><span class="tag tag--moss">Open data</span>
-    </div>
+    <aside class="techspec" aria-label="Technical specifications">
+      <header><span>Tech specs</span><span>BC-001</span></header>
+      <dl>
+        <dt>Price</dt><dd>$0.00</dd>
+        <dt>Accounts</dt><dd>None required</dd>
+        <dt>Ads / tracking</dt><dd>None</dd>
+        <dt>Data storage</dt><dd>On-device</dd>
+        <dt>Signal</dt><dd>Not required</dd>
+        <dt>Your base wt</dt><dd>${showWeight(g.base, { compact: true })}</dd>
+      </dl>
+      <div class="lens-bar" aria-hidden="true"></div>
+    </aside>
   </section>
 
   <div class="grid">
