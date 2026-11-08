@@ -1,0 +1,24 @@
+{
+  "name": "BASECAMP — Backpacking Field Kit",
+  "short_name": "BASECAMP",
+  "description": "Free gear lists, pack weight, trip maps, weather and food & water math. Works offline.",
+  "id": "./",
+  "start_url": "./#/",
+  "scope": "./",
+  "display": "standalone",
+  "orientation": "any",
+  "background_color": "#f1ecdf",
+  "theme_color": "#14251b",
+  "categories": ["travel", "sports", "utilities"],
+  "icons": [
+    { "src": "assets/icons/icon-192.png", "sizes": "192x192", "type": "image/png", "purpose": "any" },
+    { "src": "assets/icons/icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "any" },
+    { "src": "assets/icons/icon-maskable-512.png", "sizes": "512x512", "type": "image/png", "purpose": "maskable" },
+    { "src": "assets/icons/favicon.svg", "sizes": "any", "type": "image/svg+xml" }
+  ],
+  "shortcuts": [
+    { "name": "Gear List", "url": "./#/gear" },
+    { "name": "Trip Planner", "url": "./#/trip" },
+    { "name": "Weather", "url": "./#/weather" }
+  ]
+}

@@ -1,0 +1,125 @@
+<!doctype html>
+<html lang="en" data-theme="auto">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <title>BASECAMP — Free Backpacking Planner: Gear Weight, Trips, Weather</title>
+  <meta name="description" content="Free, no-account backpacking toolkit. Build a gear list and pack weight, plan trips on a map, check mountain weather, calculate food and water, and work offline on the trail.">
+  <meta name="theme-color" content="#14251b">
+  <meta name="color-scheme" content="light dark">
+
+  <!-- Open Graph / social -->
+  <meta property="og:type" content="website">
+  <meta property="og:title" content="BASECAMP — Free Backpacking Planner">
+  <meta property="og:description" content="Gear lists, pack weight, trip maps, weather, food & water math. No account. No ads. Works offline.">
+  <meta property="og:image" content="assets/og-image.png">
+  <meta property="og:image:width" content="1200">
+  <meta property="og:image:height" content="630">
+  <meta property="og:image:alt" content="BASECAMP logo over topographic contour lines">
+  <meta name="twitter:card" content="summary_large_image">
+
+  <!-- Icons + PWA -->
+  <link rel="icon" href="assets/icons/favicon.svg" type="image/svg+xml">
+  <link rel="icon" href="assets/icons/favicon-32.png" sizes="32x32" type="image/png">
+  <link rel="apple-touch-icon" href="assets/icons/apple-touch-icon.png">
+  <link rel="manifest" href="manifest.webmanifest">
+
+  <!-- Fonts: Archivo (variable width = expanded headlines) + JetBrains Mono -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Archivo:wdth,wght@62..125,400..900&family=JetBrains+Mono:wght@400;600;700;800&display=swap">
+
+  <link rel="stylesheet" href="css/styles.css">
+  <!-- Set theme before paint to avoid a flash -->
+  <script>
+    try { var t = JSON.parse(localStorage.getItem('basecamp:v1') || '{}').theme; if (t) document.documentElement.dataset.theme = t; } catch (e) {}
+  </script>
+  <script type="module" src="js/app.js"></script>
+</head>
+<body>
+  <a class="skip-link" href="#main">Skip to content</a>
+
+  <!-- Icon sprite (simple stroke icons, currentColor) -->
+  <svg width="0" height="0" style="position:absolute" aria-hidden="true" focusable="false">
+    <defs>
+      <symbol id="i-home" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 20 12 4l9 16z"/><path d="M9.5 20 12 15l2.5 5"/></symbol>
+      <symbol id="i-pack" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 4h6v3H9z"/><rect x="5" y="7" width="14" height="14" rx="4"/><path d="M8 13h8v5H8z"/></symbol>
+      <symbol id="i-map" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m3 6 6-2 6 2 6-2v14l-6 2-6-2-6 2z"/><path d="M9 4v14M15 6v14"/></symbol>
+      <symbol id="i-cloud" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M7 18h10a4 4 0 0 0 .5-7.97A6 6 0 0 0 6.1 11 3.5 3.5 0 0 0 7 18z"/></symbol>
+      <symbol id="i-food" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 11h16a8 8 0 0 1-16 0z"/><path d="M8 7c0-2 2-2 2-4M13 7c0-2 2-2 2-4"/></symbol>
+      <symbol id="i-check" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="4" y="4" width="16" height="16" rx="3"/><path d="m8 12 3 3 5-6"/></symbol>
+      <symbol id="i-book" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 5a2 2 0 0 1 2-2h13v16H6a2 2 0 0 0-2 2z"/><path d="M4 21V5M8 7h7"/></symbol>
+      <symbol id="i-share" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="6" cy="12" r="2.5"/><circle cx="18" cy="6" r="2.5"/><circle cx="18" cy="18" r="2.5"/><path d="m8.2 10.8 7.6-3.6M8.2 13.2l7.6 3.6"/></symbol>
+      <symbol id="i-sun" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M2 12h2M20 12h2M4.9 4.9l1.4 1.4M17.7 17.7l1.4 1.4M4.9 19.1l1.4-1.4M17.7 6.3l1.4-1.4"/></symbol>
+      <symbol id="i-moon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 14.5A8 8 0 1 1 9.5 4a6.5 6.5 0 0 0 10.5 10.5z"/></symbol>
+      <symbol id="i-auto" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="8"/><path d="M12 4a8 8 0 0 1 0 16z" fill="currentColor"/></symbol>
+      <symbol id="i-plus" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><path d="M12 5v14M5 12h14"/></symbol>
+      <symbol id="i-x" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><path d="M6 6l12 12M18 6 6 18"/></symbol>
+      <symbol id="i-pin" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 21s7-6.2 7-12a7 7 0 0 0-14 0c0 5.8 7 12 7 12z"/><circle cx="12" cy="9" r="2.5"/></symbol>
+      <symbol id="i-locate" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="6"/><circle cx="12" cy="12" r="1.5" fill="currentColor"/><path d="M12 2v4M12 18v4M2 12h4M18 12h4"/></symbol>
+      <symbol id="i-print" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round"><path d="M7 9V3h10v6"/><rect x="3" y="9" width="18" height="8" rx="2"/><path d="M7 14h10v7H7z"/></symbol>
+      <symbol id="i-down" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 4v11M7 10l5 5 5-5M5 20h14"/></symbol>
+      <symbol id="i-up" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 15V4M7 9l5-5 5 5M5 20h14"/></symbol>
+      <symbol id="i-link" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M10 14a4 4 0 0 0 5.7 0l3-3a4 4 0 0 0-5.7-5.7l-1 1"/><path d="M14 10a4 4 0 0 0-5.7 0l-3 3a4 4 0 0 0 5.7 5.7l1-1"/></symbol>
+      <symbol id="i-drop" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round"><path d="M12 3s6 6.5 6 11a6 6 0 0 1-12 0c0-4.5 6-11 6-11z"/></symbol>
+    </defs>
+  </svg>
+
+  <header class="site-header">
+    <a class="brand" href="#/" aria-label="BASECAMP home">
+      <svg class="brand-mark" viewBox="0 0 64 64" aria-hidden="true"><rect x="2" y="2" width="60" height="60" rx="14" fill="#ff5a1f" stroke="currentColor" stroke-width="4"/><path d="M12 48 28 18l8 14 5-8 11 24z" fill="#14251b"/><path d="M24 48l4-8 4 8" fill="#ffd23f"/></svg>
+      <span>BASECAMP<small>FIELD KIT · V1.0</small></span>
+    </a>
+    <div class="header-tools">
+      <div class="seg" role="group" aria-label="Units">
+        <button type="button" data-units="imperial" aria-pressed="true">IMP</button>
+        <button type="button" data-units="metric" aria-pressed="false">MET</button>
+      </div>
+      <button type="button" class="btn btn--sm btn--icon" id="theme-toggle" aria-label="Theme: auto. Switch theme" title="Day / Night hike mode">
+        <svg aria-hidden="true"><use href="#i-auto"/></svg>
+      </button>
+    </div>
+  </header>
+
+  <nav class="nav" aria-label="Primary">
+    <ul>
+      <li><a href="#/"><svg aria-hidden="true"><use href="#i-home"/></svg>Base</a></li>
+      <li><a href="#/gear"><svg aria-hidden="true"><use href="#i-pack"/></svg>Gear</a></li>
+      <li><a href="#/trip"><svg aria-hidden="true"><use href="#i-map"/></svg>Trip</a></li>
+      <li><a href="#/weather"><svg aria-hidden="true"><use href="#i-cloud"/></svg>Weather</a></li>
+      <li><a href="#/food"><svg aria-hidden="true"><use href="#i-food"/></svg>Food/H₂O</a></li>
+      <li><a href="#/checklist"><svg aria-hidden="true"><use href="#i-check"/></svg>Checks</a></li>
+      <li><a href="#/guide"><svg aria-hidden="true"><use href="#i-book"/></svg>Guides</a></li>
+      <li><a href="#/data"><svg aria-hidden="true"><use href="#i-share"/></svg>Save</a></li>
+    </ul>
+  </nav>
+
+  <main id="main" tabindex="-1">
+    <noscript><div class="callout callout--warn"><strong>JavaScript needed</strong>BASECAMP runs entirely in your browser and needs JavaScript enabled.</div></noscript>
+    <section class="view" id="view-home" data-route="" aria-labelledby="h-home"></section>
+    <section class="view" id="view-gear" data-route="gear" aria-labelledby="h-gear" hidden></section>
+    <section class="view" id="view-trip" data-route="trip" aria-labelledby="h-trip" hidden></section>
+    <section class="view" id="view-weather" data-route="weather" aria-labelledby="h-weather" hidden></section>
+    <section class="view" id="view-food" data-route="food" aria-labelledby="h-food" hidden></section>
+    <section class="view" id="view-checklist" data-route="checklist" aria-labelledby="h-checklist" hidden></section>
+    <section class="view" id="view-guide" data-route="guide" aria-labelledby="h-guide" hidden></section>
+    <section class="view" id="view-data" data-route="data" aria-labelledby="h-data" hidden></section>
+    <section class="view" id="view-print" data-route="print" aria-labelledby="h-print" hidden></section>
+  </main>
+
+  <footer class="site-footer">
+    <hr class="cut">
+    <div class="row between">
+      <p class="readout mb0">BASECAMP · FREE · NO ACCOUNT · NO ADS · DATA STAYS ON YOUR DEVICE</p>
+      <p class="readout mb0" id="net-status" aria-live="polite">● ONLINE</p>
+    </div>
+    <p class="help mt">Map data © <a href="https://www.openstreetmap.org/copyright" rel="noopener">OpenStreetMap</a> contributors. Weather by <a href="https://open-meteo.com/" rel="noopener">Open-Meteo</a> (CC BY 4.0). Guidance is general information, not a substitute for training, local regulations, or professional advice.</p>
+  </footer>
+
+  <div class="toasts" id="toasts" role="status" aria-live="polite"></div>
+
+  <dialog id="dialog" aria-labelledby="dialog-title">
+    <form method="dialog" class="dialog-body" id="dialog-form"></form>
+  </dialog>
+</body>
+</html>
