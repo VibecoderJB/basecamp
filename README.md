@@ -1,6 +1,6 @@
 # TRAILSPEC — free backpacking field kit
 
-**Live:** https://vibecoderjb.github.io/trailspec/
+**Live:** https://trailspec.github.io/
 
 _Formerly "BASECAMP". Data saved under the old name is picked up automatically, and old backup files still import._
 
