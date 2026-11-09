@@ -1,5 +1,5 @@
 // Lazy loader for Leaflet (free, from the unpkg CDN with Subresource Integrity)
-// and helpers for BASECAMP's custom pin markers.
+// and helpers for TRAILSPEC's custom pin markers.
 
 const LEAFLET = {
   css: { href: 'https://unpkg.com/leaflet@1.9.4/dist/leaflet.css', integrity: 'sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=' },

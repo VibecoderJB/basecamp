@@ -84,7 +84,7 @@ export function render(el) {
         <tr><th scope="row">Trip days / pins</th><td class="num">${state.trip.days.length} / ${state.trip.pins.length}</td></tr>
       </tbody></table>
       <button class="btn btn--sm btn--ghost btn--danger mt" type="button" id="reset">${icon('x')} Erase all data</button>
-      <p class="help mt">Clearing your browser's site data also erases BASECAMP data — export a backup first.</p>
+      <p class="help mt">Clearing your browser's site data also erases TRAILSPEC data — export a backup first.</p>
     </section>
   </div>`;
 
@@ -100,11 +100,11 @@ export function render(el) {
     try { await navigator.clipboard.writeText(input.value); toast('Link copied'); }
     catch { input.select(); toast('Select-all done — copy with your keyboard or long-press'); }
   });
-  $('#share-native', el)?.addEventListener('click', () => navigator.share({ title: `BASECAMP — ${state.gear.name}`, url: $('#share-url', el).value }).catch(() => {}));
+  $('#share-native', el)?.addEventListener('click', () => navigator.share({ title: `TRAILSPEC — ${state.gear.name}`, url: $('#share-url', el).value }).catch(() => {}));
 
   $('#export', el).addEventListener('click', () => {
     const data = { ...state, weather: { loc: state.weather.loc, cache: null } };
-    download(`basecamp-backup-${todayISO()}.json`, JSON.stringify({ app: 'basecamp', exported: new Date().toISOString(), data }, null, 2));
+    download(`trailspec-backup-${todayISO()}.json`, JSON.stringify({ app: 'trailspec', exported: new Date().toISOString(), data }, null, 2));
     toast('Backup downloaded');
   });
 
@@ -113,8 +113,9 @@ export function render(el) {
     try {
       if (file.size > 5e6) throw new Error('File too large');
       const json = JSON.parse(await file.text());
-      const data = json.app === 'basecamp' ? json.data : json;
-      if (!data || typeof data !== 'object' || !(data.gear || data.trip)) throw new Error('Not a BASECAMP backup');
+      // 'basecamp' = backups made before the rename
+      const data = ['trailspec', 'basecamp'].includes(json.app) ? json.data : json;
+      if (!data || typeof data !== 'object' || !(data.gear || data.trip)) throw new Error('Not a TRAILSPEC backup');
       if (!(await confirmBox('Import backup?', `<p>This replaces all data on this device with <strong>${esc(file.name)}</strong>.</p>`, 'Import'))) return;
       replaceState(data); toast('Backup imported');
     } catch (err) { toast(`Import failed: ${err.message}`); }
@@ -143,7 +144,7 @@ export function renderPrint(el) {
     <button class="btn btn--primary" type="button" id="do-print">${icon('print')} Print / Save PDF</button>
   </div>
   <article class="trail-card" aria-labelledby="h-print">
-    <div class="row between"><span>BASECAMP · TRAIL CARD</span><span>${th ? coord(th.lat, th.lng, 4) : ''}</span></div>
+    <div class="row between"><span>TRAILSPEC · TRAIL CARD</span><span>${th ? coord(th.lat, th.lng, 4) : ''}</span></div>
     <h1 id="h-print">${esc(t.name || 'Trip')}</h1>
     <p>${esc(niceDate(t.start, { weekday: 'short', year: 'numeric', month: 'short', day: 'numeric' }))} → ${esc(niceDate(t.end, { weekday: 'short', year: 'numeric', month: 'short', day: 'numeric' }))}
       · ${esc(t.from || '—')} → ${esc(t.to || '—')}</p>
@@ -191,7 +192,7 @@ export function renderPrint(el) {
         </tbody></table>`;
       }).join('')}
     </div>
-    <p style="margin-top:14px;border-top:2px dashed #111;padding-top:8px">✂ Leave a copy with someone you trust. Printed ${new Date().toLocaleDateString()} · basecamp field kit</p>
+    <p style="margin-top:14px;border-top:2px dashed #111;padding-top:8px">✂ Leave a copy with someone you trust. Printed ${new Date().toLocaleDateString()} · trailspec field kit</p>
   </article>`;
   $('#do-print', el).addEventListener('click', () => window.print());
 }

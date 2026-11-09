@@ -1,5 +1,5 @@
 /* ==========================================================================
-   BASECAMP — design system v2 · "Technical Shell"
+   TRAILSPEC — design system v2 · "Technical Shell"
    Technical-apparel minimalism (hairlines, crop marks, spec sheets) crossed
    with sport-optics energy (wide italic display, chamfered cuts, an
    iridescent "lens" accent). Mobile-first.
@@ -745,7 +745,7 @@ dialog::backdrop { background: rgba(5, 8, 10, .62); backdrop-filter: blur(3px); 
 /* Footer wordmark */
 .footer-mark {
   margin-top: 48px; font-weight: 900; font-style: italic; font-stretch: 125%; text-transform: uppercase; line-height: .78;
-  font-size: min(12.2vw, 9.2rem); letter-spacing: -.045em; color: transparent; -webkit-text-stroke: 1.5px var(--rule-strong);
+  font-size: min(10.6vw, 8.2rem); letter-spacing: -.045em; color: transparent; -webkit-text-stroke: 1.5px var(--rule-strong);
   opacity: .45; white-space: nowrap; overflow: hidden; user-select: none;
 }
 .site-footer .lens-bar { margin: 6px 0 14px; }

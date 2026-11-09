@@ -1,9 +1,9 @@
-/* BASECAMP service worker — offline-first app shell.
+/* TRAILSPEC service worker — offline-first app shell.
    Bump VERSION whenever you change any file so clients pick up the update. */
-const VERSION = 'basecamp-v3.0.0';
+const VERSION = 'trailspec-v3.1.0';
 const SHELL = `${VERSION}-shell`;
 const RUNTIME = `${VERSION}-runtime`;
-const TILES = 'basecamp-tiles';        // kept across versions
+const TILES = 'trailspec-tiles';       // kept across versions
 const MAX_TILES = 400;                  // modest cap — respects OSM tile usage policy (no bulk prefetch)
 
 // Relative URLs so the app works from any sub-path (e.g. GitHub Pages /repo/).

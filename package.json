@@ -1,6 +1,6 @@
 {
-  "name": "basecamp",
-  "version": "3.0.0",
+  "name": "trailspec",
+  "version": "3.1.0",
   "private": true,
   "description": "Free, offline-capable backpacking field kit. No build step — plain HTML/CSS/JS.",
   "type": "module",

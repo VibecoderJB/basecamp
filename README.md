@@ -1,6 +1,8 @@
-# BASECAMP — free backpacking field kit
+# TRAILSPEC — free backpacking field kit
 
-**Live:** https://vibecoderjb.github.io/basecamp/
+**Live:** https://vibecoderjb.github.io/trailspec/
+
+_Formerly "BASECAMP". Data saved under the old name is picked up automatically, and old backup files still import._
 
 A free, offline-capable web app for backpackers. No account, no ads, no paywall, no backend.
 Everything runs in the browser, and your data stays in `localStorage` on your device.
@@ -23,7 +25,7 @@ Everything runs in the browser, and your data stays in `localStorage` on your de
 You don't need a build step or dependencies, just any static file server. ES modules and service workers need `http://`, so opening the file directly with `file://` won't work.
 
 ```bash
-cd basecamp
+cd trailspec
 ```
 
 ```bash
@@ -36,15 +38,15 @@ Then open <http://localhost:8080>. (`npx serve .` works too.)
 
 ### GitHub Pages
 
-1. Create an empty repository on GitHub called `basecamp` (no README).
+1. Create an empty repository on GitHub called `trailspec` (no README).
 2. Either click **uploading an existing file** and drag in the *contents* of this folder (so `index.html` sits at the top level of the repo, not inside a folder), or from this folder run:
 
 ```bash
-git init -b main && git add -A && git commit -m "BASECAMP"
+git init -b main && git add -A && git commit -m "TRAILSPEC"
 ```
 
 ```bash
-git remote add origin https://github.com/YOUR-USERNAME/basecamp.git
+git remote add origin https://github.com/YOUR-USERNAME/trailspec.git
 ```
 
 ```bash
@@ -52,19 +54,19 @@ git push -u origin main
 ```
 
 3. On GitHub, go to **Settings → Pages → Build and deployment**, set **Source: Deploy from a branch** and **Branch: `main` / `/ (root)`**, then click **Save**.
-4. After about a minute the site is live at `https://YOUR-USERNAME.github.io/basecamp/`.
+4. After about a minute the site is live at `https://YOUR-USERNAME.github.io/trailspec/`.
 
 All paths are relative, so the app works from a sub-path. `.nojekyll` stops GitHub from processing the files.
 
 ### Netlify (backup option)
 
-- **Drag & drop:** go to <https://app.netlify.com/drop> and drop the `basecamp` folder.
+- **Drag & drop:** go to <https://app.netlify.com/drop> and drop the `trailspec` folder.
 - **From Git:** use **Add new site → Import from Git**, pick the repo, leave the build command empty and set the publish directory to `.`. `netlify.toml` already configures this.
 
 ### After deploying
 
-- Change `og:image` in `index.html` to an absolute URL (e.g. `https://YOUR-USERNAME.github.io/basecamp/assets/og-image.png`), because social networks need absolute image URLs.
-- **Every time you change files, bump `VERSION` in `sw.js`** and add any new files to `SHELL_FILES` there; `npm test` fails if you forget (e.g. `basecamp-v1.0.1`). Installed copies then update, and users see a "New version ready" toast.
+- Change `og:image` in `index.html` to an absolute URL (e.g. `https://YOUR-USERNAME.github.io/trailspec/assets/og-image.png`), because social networks need absolute image URLs.
+- **Every time you change files, bump `VERSION` in `sw.js`** and add any new files to `SHELL_FILES` there; `npm test` fails if you forget (e.g. `trailspec-v3.1.1`). Installed copies then update, and users see a "New version ready" toast.
 
 ## Project structure
 

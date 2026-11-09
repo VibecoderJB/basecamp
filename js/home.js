@@ -92,7 +92,7 @@ export function render(el) {
   const wx = state.weather.cache?.data;
   el.innerHTML = `
   <section class="hero topo" aria-labelledby="h-home">
-    <div class="coord-strip"><span class="readout">${th ? coord(th.lat, th.lng) : '44.37°N / 110.58°W'} — ELEV ${th ? '—' : '7,733 FT'}</span><span class="readout">REF BC-003 · FIELD KIT · COLORWAY <span class="cw-ref"></span></span></div>
+    <div class="coord-strip"><span class="readout">${th ? coord(th.lat, th.lng) : '44.37°N / 110.58°W'} — ELEV ${th ? '—' : '7,733 FT'}</span><span class="readout">REF TS-003 · FIELD KIT · COLORWAY <span class="cw-ref"></span></span></div>
     <div class="hero-copy">
       <span class="kicker">Free backpacking field kit</span>
       <h1 id="h-home">Pack light.<br><span class="accent">Plan right.</span></h1>

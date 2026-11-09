@@ -6,13 +6,15 @@
 import { normalize, defaults, rowToItem, defaultChecklist, SCHEMA_VERSION } from './core/schema.js';
 
 export { defaults, rowToItem, defaultChecklist, SCHEMA_VERSION };
-/** Storage key is stable across schema versions — data is migrated in place. */
-export const STORAGE_KEY = 'basecamp:v1';
+/** Storage key is stable across schema versions — data is migrated in place.
+ *  LEGACY_KEY is where data lived before the BASECAMP → TRAILSPEC rename; it is read once and copied over. */
+export const STORAGE_KEY = 'trailspec:v1';
+export const LEGACY_KEY = 'basecamp:v1';
 
 let loadError = null;
 function load() {
   try {
-    const raw = localStorage.getItem(STORAGE_KEY);
+    const raw = localStorage.getItem(STORAGE_KEY) ?? localStorage.getItem(LEGACY_KEY);
     return raw ? normalize(JSON.parse(raw)) : defaults();
   } catch (e) {
     loadError = e; // corrupted JSON or storage blocked — start fresh but tell the user

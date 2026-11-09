@@ -1,4 +1,4 @@
-// BASECAMP — app shell: lazy hash router with error boundaries, colorways, units,
+// TRAILSPEC — app shell: lazy hash router with error boundaries, colorways, units,
 // save status, offline status, PWA install, print. Views are loaded on demand.
 import { state, save, subscribe, onSaveStatus, storageProblem } from './store.js';
 import { $, $$, toast, esc } from './utils.js';
@@ -43,7 +43,7 @@ async function loadRoute(r) {
 
 /** Error boundary: a broken view shows a recovery card instead of a blank app. */
 function renderError(el, err, title) {
-  console.error(`BASECAMP view error (${title}):`, err);
+  console.error(`TRAILSPEC view error (${title}):`, err);
   el.innerHTML = `<div class="card fault" role="alert">
     <div class="card-head"><h2>Module fault</h2><span class="label">${esc(title)}</span></div>
     <p>This screen hit a problem and couldn't load. <strong>Your saved data is safe</strong> — it lives on this device.</p>
@@ -96,7 +96,7 @@ async function route() {
   $$('.view').forEach((v) => { v.hidden = v.dataset.route !== r; });
   const el = $(`.view[data-route="${r}"]`);
   updateNav(r);
-  document.title = `${def.title}${params.slug && r === 'guide' ? ' · Guide' : ''} — BASECAMP`;
+  document.title = `${def.title}${params.slug && r === 'guide' ? ' · Guide' : ''} — TRAILSPEC`;
 
   if (!loaded.has(r)) {
     el.innerHTML = `<div class="loading-view" role="status"><span class="spinner" aria-hidden="true"></span>LOADING ${esc(def.title.toUpperCase())}…</div>`;
@@ -157,7 +157,7 @@ onSaveStatus(({ status, at }) => {
 /* ---------- Global safety net ---------- */
 let lastErrToast = 0;
 function onGlobalError(err) {
-  console.error('BASECAMP:', err);
+  console.error('TRAILSPEC:', err);
   if (Date.now() - lastErrToast > 10000) { lastErrToast = Date.now(); toast('Something went wrong, but your data is safe. Try that again.'); }
 }
 addEventListener('error', (e) => { if (e.error) onGlobalError(e.error); });

@@ -45,7 +45,7 @@ await shot(`<div style="position:relative;width:1200px;height:630px;background:#
     <span>44.37°N / 110.58°W — ELEV 7,733 FT</span><span>SPEC SHEET 001</span></div>
   <div style="position:absolute;left:70px;top:150px;display:flex;align-items:center;gap:30px">
     <div style="width:130px;height:130px">${mark.replace('<svg ', '<svg width="100%" height="100%" ')}</div>
-    <div style="font-weight:900;font-stretch:125%;font-size:114px;line-height:.85;letter-spacing:-.03em">BASECAMP</div>
+    <div style="font-weight:900;font-stretch:125%;font-size:114px;line-height:.85;letter-spacing:-.03em">TRAILSPEC</div>
   </div>
   <div style="position:absolute;left:70px;top:350px;font-weight:800;font-stretch:112%;font-size:48px;text-transform:uppercase;line-height:1.05">Pack light. <span style="color:#b03a0c">Plan right.</span></div>
   <div style="position:absolute;left:70px;top:420px;font-size:28px;color:#3c463c;max-width:900px">Free backpacking field kit — gear weight, trip maps, weather, food &amp; water. No account. Works offline.</div>

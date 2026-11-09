@@ -3,21 +3,21 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-  <title>BASECAMP — Free Backpacking Planner: Gear Weight, Trips, Weather</title>
+  <title>TRAILSPEC — Free Backpacking Planner: Gear Weight, Trips, Weather</title>
   <meta name="description" content="Free, no-account backpacking toolkit. Build a gear list and pack weight, plan trips on a map, check mountain weather, calculate food and water, and work offline on the trail.">
   <meta name="theme-color" content="#14251b">
   <meta name="color-scheme" content="light dark">
 
   <!-- Open Graph / social -->
   <meta property="og:type" content="website">
-  <meta property="og:title" content="BASECAMP — Free Backpacking Planner">
+  <meta property="og:title" content="TRAILSPEC — Free Backpacking Planner">
   <meta property="og:description" content="Gear lists, pack weight, trip maps, weather, food & water math. No account. No ads. Works offline.">
-  <meta property="og:image" content="https://vibecoderjb.github.io/basecamp/assets/og-image.png">
-  <meta property="og:url" content="https://vibecoderjb.github.io/basecamp/">
-  <link rel="canonical" href="https://vibecoderjb.github.io/basecamp/">
+  <meta property="og:image" content="https://vibecoderjb.github.io/trailspec/assets/og-image.png">
+  <meta property="og:url" content="https://vibecoderjb.github.io/trailspec/">
+  <link rel="canonical" href="https://vibecoderjb.github.io/trailspec/">
   <meta property="og:image:width" content="1200">
   <meta property="og:image:height" content="630">
-  <meta property="og:image:alt" content="BASECAMP logo over topographic contour lines">
+  <meta property="og:image:alt" content="TRAILSPEC logo over topographic contour lines">
   <meta name="twitter:card" content="summary_large_image">
 
   <!-- Icons + PWA -->
@@ -36,7 +36,7 @@
   <script>
     (function () {
       var dark = { sapphire: 1, forage: 1, ember: 1 }, t = 'auto';
-      try { t = JSON.parse(localStorage.getItem('basecamp:v1') || '{}').theme || 'auto'; } catch (e) {}
+      try { t = JSON.parse(localStorage.getItem('trailspec:v1') || localStorage.getItem('basecamp:v1') || '{}').theme || 'auto'; } catch (e) {}
       if (t === 'light') t = 'granite'; if (t === 'dark') t = 'sapphire';
       if (t === 'auto' || !/^(granite|sapphire|forage|glacier|ember)$/.test(t)) t = matchMedia('(prefers-color-scheme: dark)').matches ? 'sapphire' : 'granite';
       document.documentElement.dataset.theme = t;
@@ -76,9 +76,9 @@
 
   <header class="site-header">
     <div class="brand-wrap">
-      <a class="brand" href="#/" aria-label="BASECAMP home">
+      <a class="brand" href="#/" aria-label="TRAILSPEC home">
         <svg class="brand-mark" viewBox="0 0 64 64" aria-hidden="true"><path class="bm-fill" d="M0 0h64v50L50 64H0z"/><path class="bm-ink" d="M9 50 27 17l9 16 6-9 13 26z"/><path d="M23 50l4-8 4 8" fill="#ffd23f"/></svg>
-        <span>BASECAMP</span>
+        <span>TRAILSPEC</span>
       </a>
       <span class="save-status" id="save-status" role="status" aria-live="polite" data-status="saved">SAVED</span>
     </div>
@@ -131,7 +131,7 @@
   </dialog>
 
   <main id="main" tabindex="-1">
-    <noscript><div class="callout callout--warn"><strong>JavaScript needed</strong>BASECAMP runs entirely in your browser and needs JavaScript enabled.</div></noscript>
+    <noscript><div class="callout callout--warn"><strong>JavaScript needed</strong>TRAILSPEC runs entirely in your browser and needs JavaScript enabled.</div></noscript>
     <section class="view" id="view-home" data-route="" aria-labelledby="h-home"></section>
     <section class="view" id="view-gear" data-route="gear" aria-labelledby="h-gear" hidden></section>
     <section class="view" id="view-trip" data-route="trip" aria-labelledby="h-trip" hidden></section>
@@ -144,7 +144,7 @@
   </main>
 
   <footer class="site-footer">
-    <div class="footer-mark" aria-hidden="true">BASECAMP</div>
+    <div class="footer-mark" aria-hidden="true">TRAILSPEC</div>
     <div class="lens-bar" aria-hidden="true"></div>
     <div class="row between">
       <p class="readout mb0">FIELD KIT V3 · FREE · NO ACCOUNT · NO ADS · DATA STAYS ON YOUR DEVICE</p>
